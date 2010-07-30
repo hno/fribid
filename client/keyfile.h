@@ -27,6 +27,8 @@
 
 #include <stdbool.h>
 
+#include <libp11.h>
+
 /* These values are used where "certMasks" are expected */
 #define CERTUSE_ISSUER            6
 #define CERTUSE_SIGNING          64
@@ -52,6 +54,9 @@ bool keyfile_getBase64Chain(const char *p12Data, const int p12Length,
                             const KeyfileSubject *person,
                             const unsigned int certMask,
                             char ***certs, int *count);
+
+bool smartcard_getBase64Chain(PKCS11_SLOT *slot,
+                              char ***certs, int *count);
 
 bool keyfile_sign(const char *p12Data, const int p12Length,
                   const KeyfileSubject *person,

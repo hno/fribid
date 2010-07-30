@@ -58,7 +58,7 @@ static const char defaultEmulatedVersion[] = EMULATED_VERSION;
 static char *getVersionString() {
     static const char template[] =
         "Personal=%1$s&libCardSiemens_so=%1$s&libBranding_so=%1$s&libP11_so=%1$s&libtokenapi_so=%1$s&libCardSetec_so=%1$s&libCardPrisma_so=%1$s&libplugins_so=%1$s&libai_so=%1$s&personal_bin=%1$s&"
-        "platform=linux&distribution=ubuntu&os_version=unknown&best_before=%2$" PRId64 "&";
+        "platform=linux&distribution=ubuntu&os_version=unknown&cardreader=Handelsbanken card reader&best_before=%2$" PRId64 "&";
     
     long lexpiry;
     int64_t expiry;
@@ -264,7 +264,8 @@ static const char signobj_id[] = "bidSignedData";
  *
  * @return  A status code (see bankid.h)
  */
-static BankIDError sign(const char *p12Data, const int p12Length,
+static BankIDError sign(PKCS11_SLOT *slot,
+                        const char *p12Data, const int p12Length,
                         const KeyfileSubject *person,
                         const char *password,
                         const char *challenge,
@@ -283,7 +284,7 @@ static BankIDError sign(const char *p12Data, const int p12Length,
     free(version);
     
     // Sign
-    char *xmlsig = xmldsig_sign(p12Data, p12Length,
+    char *xmlsig = xmldsig_sign(slot, p12Data, p12Length,
                 person, certMask, password,
                 signobj_id, object);
     free(object);
@@ -299,17 +300,19 @@ static BankIDError sign(const char *p12Data, const int p12Length,
     }
 }
 
-BankIDError bankid_authenticate(const char *p12Data, const int p12Length,
+BankIDError bankid_authenticate(PKCS11_SLOT *slot,
+                                const char *p12Data, const int p12Length,
                                 const KeyfileSubject *person,
                                 const char *password,
                                 const char *challenge,
                                 const char *hostname, const char *ip,
                                 char **signature) {
-    return sign(p12Data, p12Length, person, password, challenge,
+    return sign(slot, p12Data, p12Length, person, password, challenge,
                 hostname, ip, CERTUSE_AUTHENTICATION, "Identification", "", signature);
 }
 
-BankIDError bankid_sign(const char *p12Data, const int p12Length,
+BankIDError bankid_sign(PKCS11_SLOT *slot,
+                        const char *p12Data, const int p12Length,
                         const KeyfileSubject *person,
                         const char *password,
                         const char *challenge,
@@ -324,7 +327,7 @@ BankIDError bankid_sign(const char *p12Data, const int p12Length,
         extra = rasprintf_append(extra, signedInvisibleText_template, invisibleMessage);
     }
     
-    error = sign(p12Data, p12Length, person, password, challenge,
+    error = sign(slot, p12Data, p12Length, person, password, challenge,
                  hostname, ip, CERTUSE_SIGNING, "Signing", extra, signature);
     
     free(extra);

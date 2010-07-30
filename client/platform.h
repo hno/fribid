@@ -27,6 +27,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <libp11.h>
 
 /* Initialization */
 void platform_init(int *argc, char ***argv);
@@ -94,7 +95,7 @@ void platform_startSign(const char *url, const char *hostname, const char *ip,
                         const char *subjectFilter, unsigned long parentWindowId);
 void platform_endSign();
 void platform_setMessage(const char *message);
-bool platform_sign(char **signature, int *siglen, char **person,
+bool platform_sign(PKCS11_SLOT **slot, char **signature, int *siglen, char **person,
                    char *password, int password_maxlen);
 
 void platform_signError();

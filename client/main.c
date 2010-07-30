@@ -127,15 +127,15 @@ void pipeData() {
             if (bankid_versionHasExpired()) {
                 platform_versionExpiredError();
             }
-
-            while (platform_sign(&p12Data, &p12Length, &person, password, password_maxsize)) {
+            PKCS11_SLOT *slot;
+            while (platform_sign(&slot, &p12Data, &p12Length, &person, password, password_maxsize)) {
                 // Try to authenticate/sign
                 if (command == PMC_Authenticate) {
-                    error = bankid_authenticate(p12Data, p12Length, person, password,
+                    error = bankid_authenticate(slot, p12Data, p12Length, person, password,
                                                 challenge, hostname, ip,
                                                 &signature);
                 } else {
-                    error = bankid_sign(p12Data, p12Length, person, password,
+                    error = bankid_sign(slot, p12Data, p12Length, person, password,
                                         challenge, hostname, ip,
                                         message, invisibleMessage, &signature);
                 }

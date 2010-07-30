@@ -27,7 +27,8 @@
 
 #include "keyfile.h"
 
-char *xmldsig_sign(const char *p12Data, const int p12Length,
+char *xmldsig_sign(PKCS11_SLOT *slot,
+                   const char *p12Data, const int p12Length,
                    const KeyfileSubject *person,
                    const unsigned int certMask,
                    const char *password,

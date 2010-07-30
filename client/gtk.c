@@ -81,7 +81,10 @@ static GtkDialog *signDialog;
 static GtkLabel *operationLabel;
 static GtkTextView *signText;
 static GtkComboBox *signaturesCombo;
+static GtkComboBox *slotsCombo;
 static GtkEntry *passwordEntry;
+static GtkRadioButton *radioSmartCard;
+static GtkRadioButton *radioFile;
 static GtkButton *signButton;
 static GtkLabel *signButtonLabel;
 
@@ -90,6 +93,7 @@ static GtkWidget *signScroller;
 
 static char *currentSubjectFilter;
 static bool dialogShown;
+static PKCS11_CTX *ctx;
 
 static void showMessage(GtkMessageType type, const char *text) {
     GtkWidget *dialog = gtk_message_dialog_new(
@@ -100,8 +104,10 @@ static void showMessage(GtkMessageType type, const char *text) {
 }
 
 static void validateDialog(GtkWidget *ignored1, gpointer *ignored2) {
+    //TODO: radio etc etc
     gtk_widget_set_sensitive(GTK_WIDGET(signButton),
-                             (gtk_combo_box_get_active(signaturesCombo) != -1));
+                             (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(radioSmartCard)) && (gtk_combo_box_get_active(signaturesCombo) != -1) ) ||
+                             (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(radioSmartCard)) && (gtk_combo_box_get_active(slotsCombo) != -1)));
 }
 
 static bool addSignatureFile(GtkListStore *signatures, const char *filename,
@@ -176,6 +182,55 @@ static void selectDefaultSignature() {
     }
 }
 
+static void selectDefaultSlot() {
+    //TODO: hitta rätt slot beroende på legitimering / signering
+    GtkTreeModel *model = gtk_combo_box_get_model(slotsCombo);
+    GtkTreeIter iter = { .stamp = 0 };
+    
+    if (gtk_tree_model_get_iter_first(model, &iter) &&
+        !gtk_tree_model_iter_next(model, &iter)) {
+        // There's only one item, select it
+        gtk_tree_model_get_iter_first(model, &iter);
+        gtk_combo_box_set_active_iter(slotsCombo, &iter);
+    }
+}
+
+//TODO: do async / other thread...
+static void setupSmartCard(GtkListStore *signatures) {
+    int rc;
+    unsigned int nslots;
+    PKCS11_SLOT *slots;
+
+    ctx = PKCS11_CTX_new();
+
+    /* load pkcs #11 module */
+    rc = PKCS11_CTX_load(ctx, "/usr/lib/opensc-pkcs11.so"); //TODO build parameter
+    if (rc) {
+        fprintf(stderr, "loading pkcs11 engine failed: %s\n",
+                ERR_reason_error_string(ERR_get_error()));
+        return;
+    }
+
+    /* get information on all slots */
+    rc = PKCS11_enumerate_slots(ctx, &slots, &nslots);
+    if (rc < 0) {
+        fprintf(stderr, "no slots available\n");
+        return;
+    }
+
+    GtkTreeIter iter = { .stamp = 0 };
+    
+    for (unsigned int i = 0; i <= nslots-1; i++) {
+        if (slots[i].token) {
+            char * displayName = strdup(slots[i].token->label);
+            gtk_list_store_append(signatures, &iter);
+            gtk_list_store_set(signatures, &iter,
+                               0, displayName,
+                               1, &slots[i], -1);
+        }
+    }
+}
+
 void platform_startSign(const char *url, const char *hostname, const char *ip,
                         const char *subjectFilter, unsigned long parentWindowId) {
     char** paths;
@@ -204,6 +259,10 @@ void platform_startSign(const char *url, const char *hostname, const char *ip,
     signScroller = GTK_WIDGET(gtk_builder_get_object(builder, "sign_scroller"));
     signText = GTK_TEXT_VIEW(gtk_builder_get_object(builder, "sign_text"));
     
+    //Create a GtkListStore of (displayname, slot) tuples
+    GtkListStore *slotsmodel = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
+    setupSmartCard(slotsmodel);
+
     // Create a GtkListStore of (displayname, person, filename) tuples
     GtkListStore *signatures = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_STRING);
     GtkTreeIter iter = { .stamp = 0 };
@@ -233,14 +292,38 @@ void platform_startSign(const char *url, const char *hostname, const char *ip,
     gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(signaturesCombo),
                                    renderer, "text", 0, (char *)NULL);
     
+    radioSmartCard = GTK_RADIO_BUTTON(gtk_builder_get_object(builder, "radio_smartcard"));
+    g_signal_connect(G_OBJECT(radioSmartCard), "toggled",
+                     G_CALLBACK(validateDialog), NULL);   
+    radioFile = GTK_RADIO_BUTTON(gtk_builder_get_object(builder, "radio_file"));    
+    g_signal_connect(G_OBJECT(radioFile), "toggled",
+                     G_CALLBACK(validateDialog), NULL);   
+
     // Used to dim the "Sign" button when no signature has been selected
     g_signal_connect(G_OBJECT(signaturesCombo), "changed",
                      G_CALLBACK(validateDialog), NULL);
     
+
+    slotsCombo = GTK_COMBO_BOX(gtk_builder_get_object(builder, "slots_combo"));
+    gtk_combo_box_set_model(slotsCombo, GTK_TREE_MODEL(slotsmodel));
+    g_object_unref(slotsmodel);
+    
+    GtkCellRenderer *slotrenderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(slotsCombo),
+                               slotrenderer, TRUE);
+    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(slotsCombo),
+                                   slotrenderer, "text", 0, (char *)NULL);
+    
+    // Used to dim the "Sign" button when no signature has been selected
+    g_signal_connect(G_OBJECT(slotsCombo), "changed",
+                     G_CALLBACK(validateDialog), NULL);
+
+
     selectDefaultSignature();
-    
+    selectDefaultSlot();
+
     passwordEntry = GTK_ENTRY(gtk_builder_get_object(builder, "password_entry"));
-    
+
     signDialog = GTK_DIALOG(gtk_builder_get_object(builder, "dialog_sign"));
     
     bool transientOk = false;
@@ -352,7 +435,7 @@ static void selectExternalFile() {
  * Waits for the user to fill in the dialog, and loads the P12 file for
  * the selected subject.
  */
-bool platform_sign(char **signature, int *siglen, KeyfileSubject **person,
+bool platform_sign(PKCS11_SLOT **slot, char **signature, int *siglen, KeyfileSubject **person,
                    char *password, int password_maxlen) {
     guint response;
 
@@ -378,25 +461,41 @@ bool platform_sign(char **signature, int *siglen, KeyfileSubject **person,
         *siglen = 0;
         *person = NULL;
         
-        if (gtk_combo_box_get_active_iter(signaturesCombo, &iter)) {
-            const KeyfileSubject *selectedPerson;
-            char *filename;
-            GtkTreeModel *model = gtk_combo_box_get_model(signaturesCombo);
-            gtk_tree_model_get(model, &iter,
-                               1, &selectedPerson,
-                               2, &filename, -1);
-            *person = keyfile_duplicateSubject(selectedPerson);
+        //TODO: cleanup smartcard ctx and free slots etc etc
+        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radioSmartCard))) {
+            if (gtk_combo_box_get_active_iter(slotsCombo, &iter)) {
+                GtkTreeModel *model = gtk_combo_box_get_model(slotsCombo);
+                const PKCS11_SLOT *selectedSlot;
+                char *displayname;
+                gtk_tree_model_get(model, &iter,
+                                   0, &displayname,
+                                   1, &selectedSlot, -1);
+
+                *slot = selectedSlot;
+                return true;
+            }
+        } else {
+            if (gtk_combo_box_get_active_iter(signaturesCombo, &iter)) {
+                const KeyfileSubject *selectedPerson;
+                char *filename;
+                GtkTreeModel *model = gtk_combo_box_get_model(signaturesCombo);
+                gtk_tree_model_get(model, &iter,
+                                   1, &selectedPerson,
+                                   2, &filename, -1);
+                *person = keyfile_duplicateSubject(selectedPerson);
+                
+                // Read .p12 file
+                platform_readFile(filename, signature, siglen);
+                free(filename);
+            }
             
-            // Read .p12 file
-            platform_readFile(filename, signature, siglen);
-            free(filename);
+            // Copy the password to the secure buffer
+            strncpy(password, gtk_entry_get_text(passwordEntry), password_maxlen-1);
+            // Be sure to terminate this under all circumstances
+            password[password_maxlen-1] = '\0';
+            return true;
         }
-        
-        // Copy the password to the secure buffer
-        strncpy(password, gtk_entry_get_text(passwordEntry), password_maxlen-1);
-        // Be sure to terminate this under all circumstances
-        password[password_maxlen-1] = '\0';
-        return true;
+        return false;
     } else {
         // User pressed cancel or closed the dialog
         return false;

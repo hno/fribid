@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <libp11.h>
+
 #include <pk11pub.h>
 #include <p12.h>
 #include <nss.h>
@@ -288,6 +290,38 @@ static CERTCertificate *findCert(const CERTCertList *certList,
     }
     return NULL;
 }
+
+
+/**
+ * TODO
+ */
+bool smartcard_getBase64Chain(PKCS11_SLOT *slot,
+                              char ***certs, int *count) {
+    int rc = 0;
+    unsigned int ncerts;
+    PKCS11_CERT *sccerts;
+
+    rc = PKCS11_enumerate_certs(slot->token, &sccerts, &ncerts);
+    
+    if (!ncerts) return false;
+
+    *count = ncerts;
+    *certs = malloc(sizeof(char*));
+    *certs = realloc(*certs, *count * sizeof(char*));
+    for (unsigned int i = 0; i <= ncerts-1; i++) {
+        unsigned char *buf;
+        int len;
+        buf = NULL;
+        len = i2d_X509(sccerts[i].x509, &buf);
+        char *base64 = NULL;
+        base64 = base64_encode((const char*)buf, len);
+        (*certs)[i] = base64;
+        free(buf);
+    }
+    
+    return true;
+}
+
 
 /**
  * Returns a list of DER-BASE64 encoded certificates, from the subject

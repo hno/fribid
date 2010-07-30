@@ -37,14 +37,16 @@ bool bankid_versionHasExpired();
 char *bankid_getVersion();
 
 
-BankIDError bankid_authenticate(const char *p12Data, const int p12Length,
+BankIDError bankid_authenticate(PKCS11_SLOT *slot,
+                                const char *p12Data, const int p12Length,
                                 const KeyfileSubject *person,
                                 const char *password,
                                 const char *challenge,
                                 const char *hostname, const char *ip,
                                 char **signature);
 
-BankIDError bankid_sign(const char *p12Data, const int p12Length,
+BankIDError bankid_sign(PKCS11_SLOT *slot,
+                        const char *p12Data, const int p12Length,
                         const KeyfileSubject *person,
                         const char *password,
                         const char *challenge,

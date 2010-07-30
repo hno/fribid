@@ -28,6 +28,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <libp11.h>
+#include <openssl/x509.h>
+#include <sechash.h>
+
 #include "keyfile.h"
 #include "xmldsig.h"
 #include "misc.h"
@@ -71,29 +75,62 @@ static const char keyinfo_template[] =
 
 static const char cert_template[] =
     "<X509Certificate>%s</X509Certificate>";
+#define MAX_SIGSIZE 256
 
 /**
  * Creates a xmldsig signature. See the sign function in bankid.c.
  */
-char *xmldsig_sign(const char *p12Data, const int p12Length,
+char *xmldsig_sign(PKCS11_SLOT *slot,
+                   const char *p12Data, const int p12Length,
                    const KeyfileSubject *person,
                    const unsigned int certMask,
                    const char *password,
                    const char *dataId, const char *data) {
     
+    bool smartcard = slot != NULL;
+    PKCS11_CERT *authcert;
+    int rc;
+
+    if (smartcard) {
+        unsigned int ncerts;
+    	PKCS11_CERT *certs;
+
+        /* get all certs */
+        rc = PKCS11_enumerate_certs(slot->token, &certs, &ncerts);
+        if (rc) {
+            fprintf(stderr, "PKCS11_enumerate_certs failed\n");
+            return NULL;
+        }
+        if (ncerts <= 0) {
+            fprintf(stderr, "no certificates found\n");
+            return NULL;
+        }
+
+        /* use the first cert */
+        authcert=&certs[0];
+    }
+
     // Keyinfo
     char **certs;
     int certCount;
-    if (!keyfile_getBase64Chain(p12Data, p12Length, person, certMask,
-                                &certs, &certCount)) {
-        return NULL;
+
+    if (smartcard) {
+        if (!smartcard_getBase64Chain(slot, &certs, &certCount)) {
+            fprintf(stderr, "smartcard base64 failed..\n");
+            return NULL;
+        }
+    } else {
+        if (!keyfile_getBase64Chain(p12Data, p12Length, person, certMask,
+                                    &certs, &certCount)) {
+            return NULL;
+        }      
     }
-    
+
     int certsLength = (strlen(cert_template)-2) * certCount;
     for (int i = 0; i < certCount; i++) {
         certsLength += strlen(certs[i]);
     }
-    
+
     char *keyinfoInner = malloc(certsLength+1);
     keyinfoInner[0] = '\0';
     char *keyend = keyinfoInner;
@@ -118,14 +155,38 @@ char *xmldsig_sign(const char *p12Data, const int p12Length,
     // Signature
     char *sigData;
     int sigLen;
-    
-    if (!keyfile_sign(p12Data, p12Length, person, certMask, password,
-                      signedinfo, strlen(signedinfo), &sigData, &sigLen)) {
-        free(keyinfo);
-        free(signedinfo);
-        return NULL;
+    if (smartcard) {
+        PKCS11_KEY *authkey;
+        char shasum[SHA1_LENGTH];
+
+        rc = PKCS11_login(slot, 0, NULL	);
+        if (rc != 0) {
+            return NULL;
+        }
+
+        authkey = PKCS11_find_key(authcert);
+        if (!authkey) {
+            return NULL;
+        }
+
+        sigLen = MAX_SIGSIZE;
+        sigData = malloc(MAX_SIGSIZE);
+
+        //TODO: flytta till misc.c
+        HASH_HashBuf(HASH_AlgSHA1, (unsigned char*)shasum, (unsigned char*)signedinfo, strlen(signedinfo));
+
+	    rc = PKCS11_sign(NID_sha1, (const unsigned char*)shasum, SHA1_LENGTH, (unsigned char*)sigData, (unsigned int*) &sigLen, authkey);
+	    if (rc != 1) {
+            return NULL;
+	    }
+    } else {
+        if (!keyfile_sign(p12Data, p12Length, person, certMask, password,
+                          signedinfo, strlen(signedinfo), &sigData, &sigLen)) {
+            free(keyinfo);
+            free(signedinfo);
+            return NULL;
+        }
     }
-    
     char *signature = base64_encode(sigData, sigLen);
     free(sigData);
     
