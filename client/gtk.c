@@ -204,7 +204,7 @@ static void setupSmartCard(GtkListStore *signatures) {
     ctx = PKCS11_CTX_new();
 
     /* load pkcs #11 module */
-    rc = PKCS11_CTX_load(ctx, "/usr/lib/opensc-pkcs11.so"); //TODO build parameter
+    rc = PKCS11_CTX_load(ctx, "/usr/lib64/opensc-pkcs11.so"); //TODO build parameter
     if (rc) {
         fprintf(stderr, "loading pkcs11 engine failed: %s\n",
                 ERR_reason_error_string(ERR_get_error()));
