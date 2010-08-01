@@ -57,19 +57,19 @@ static const char defaultEmulatedVersion[] = EMULATED_VERSION;
  */
 static char *getVersionString() {
     static const char template[] =
-	"Personal=%1$s"
-	"&libai_so=%1$s"
-	"&libP11_so=%1$s"
-	"&libplugins_so=%1$s"
-	"&libtokenapi_so=%1$s"
-	"&libCardSiemens_so=%1$s"
-	"&libCardSetec_so=%1$s"
-	"&libCardPrisma_so=%1$s"
-	"&libBranding_so=%1$s"
-	"&personal_bin=%1$s"
-	"&SmartCard_Reader=Handelsbanken card reader [MCI_OSR_0205] 00 00"
-	"&platform=linux&distribution=unknown&os_version=unknown"
-	"&best_before=%2$" PRId64 "&";
+	"Personal=%1$s&"
+	"libai_so=%1$s&"
+	"libP11_so=%1$s&"
+	"libplugins_so=%1$s&"
+	"libtokenapi_so=%1$s&"
+	"libCardSiemens_so=%1$s&"
+	"libCardSetec_so=%1$s&"
+	"libCardPrisma_so=%1$s&"
+	"libBranding_so=%1$s&"
+	"personal_bin=%1$s&"
+	"SmartCard_Reader=Handelsbanken card reader [MCI_OSR_0205] 00 00&"
+	"platform=linux&distribution=unknown&os_version=unknown&"
+	"best_before=%2$" PRId64 "&";
     
     long lexpiry;
     int64_t expiry;
