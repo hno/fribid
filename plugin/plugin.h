@@ -31,6 +31,8 @@ typedef enum {
     PT_Version,
     PT_Authentication,
     PT_Signer,
+    PT_RegUtil,
+    PT_Logout,
 } PluginType;
 
 typedef enum {
@@ -67,6 +69,8 @@ typedef struct {
             /* Output parameters */
             char *signature;
         } sign;
+	struct {
+	} regutil;
     } info;
 } Plugin;
 

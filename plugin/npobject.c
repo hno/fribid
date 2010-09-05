@@ -193,6 +193,8 @@ static bool objHasMethod(NPObject *npobj, NPIdentifier ident) {
     if (!copyIdentifierName(ident, name, sizeof(name)))
         return false;
     
+    printf("objHasMethod: %d %s(%d)\n", this->plugin->type, name);
+
     switch (this->plugin->type) {
         case PT_Version:
             return !strcmp(name, "GetVersion");
@@ -200,6 +202,8 @@ static bool objHasMethod(NPObject *npobj, NPIdentifier ident) {
         case PT_Signer:
             return !strcmp(name, "GetParam") || !strcmp(name, "SetParam") ||
                    !strcmp(name, "PerformAction") || !strcmp(name, "GetLastError");
+	case PT_Logout:
+	    return !strcmp(name, "LogoutTokens");
         default:
             return false;
     }
@@ -212,7 +216,9 @@ static bool objInvoke(NPObject *npobj, NPIdentifier ident,
     char name[64];
     if (!copyIdentifierName(ident, name, sizeof(name)))
         return false;
-    
+
+    printf("objInvoke: %d %s(%d)\n", this->plugin->type, name, argCount);
+
     switch (this->plugin->type) {
         case PT_Version:
             if (!strcmp(name, "GetVersion") && (argCount == 0)) {
@@ -281,6 +287,13 @@ static bool objInvoke(NPObject *npobj, NPIdentifier ident,
                 INT32_TO_NPVARIANT((int32_t)ret, *result);
                 return true;
             }
+            return false;
+	case PT_Logout:
+            if (!strcmp(name, "LogoutTokens") && (argCount == 0)) {
+                INT32_TO_NPVARIANT((int32_t)0, *result);
+		return true;
+	    }
+	    
             return false;
         default:
             return false;

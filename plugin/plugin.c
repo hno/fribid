@@ -72,6 +72,10 @@ void plugin_free(Plugin *plugin) {
             free(plugin->info.sign.invisibleMessage);
             free(plugin->info.sign.signature);
             break;
+	case PT_Logout:
+	    break;
+	case PT_RegUtil:
+	    break;
     }
     free(plugin->url);
     free(plugin->hostname);
