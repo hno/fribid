@@ -100,8 +100,8 @@ static char *getWindowProperty(NPP instance, const char *const identifiers[]) {
                 NPN_ReleaseVariantValue(&value);
                 return NULL;
             }
-            char *url = strndup(NPVARIANT_TO_STRING(value).utf8characters,
-                                NPVARIANT_TO_STRING(value).utf8length);
+            char *url = strndup(NPVARIANT_TO_STRING(value).UTF8Characters,
+                                NPVARIANT_TO_STRING(value).UTF8Length);
             NPN_ReleaseVariantValue(&value);
             return url;
         }
@@ -229,7 +229,7 @@ static bool objInvoke(NPObject *npobj, NPIdentifier ident,
             if (!strcmp(name, "GetParam") && (argCount == 1) &&
                 NPVARIANT_IS_STRING(args[0])) {
                 // Get parameter
-                char *param = strndup(NPVARIANT_TO_STRING(args[0]).utf8characters, NPVARIANT_TO_STRING(args[0]).utf8length);
+                char *param = strndup(NPVARIANT_TO_STRING(args[0]).UTF8Characters, NPVARIANT_TO_STRING(args[0]).UTF8Length);
                 if (!param) return false;
                 char *value = sign_getParam(this->plugin, param);
                 
@@ -246,13 +246,13 @@ static bool objInvoke(NPObject *npobj, NPIdentifier ident,
             } else if (!strcmp(name, "SetParam") && (argCount == 2) &&
                        NPVARIANT_IS_STRING(args[0]) && NPVARIANT_IS_STRING(args[1])) {
                 // Set parameter
-                if (NPVARIANT_TO_STRING(args[1]).utf8length >= 10*1024*1024) {
+                if (NPVARIANT_TO_STRING(args[1]).UTF8Length >= 10*1024*1024) {
                     // Value is larger than 10 MiB
                     return false;
                 }
                 
-                char *param = strndup(NPVARIANT_TO_STRING(args[0]).utf8characters, NPVARIANT_TO_STRING(args[0]).utf8length);
-                char *value = strndup(NPVARIANT_TO_STRING(args[1]).utf8characters, NPVARIANT_TO_STRING(args[1]).utf8length);
+                char *param = strndup(NPVARIANT_TO_STRING(args[0]).UTF8Characters, NPVARIANT_TO_STRING(args[0]).UTF8Length);
+                char *value = strndup(NPVARIANT_TO_STRING(args[1]).UTF8Characters, NPVARIANT_TO_STRING(args[1]).UTF8Length);
                 bool ok = (param && value);
                 
                 if (ok) {
@@ -267,7 +267,7 @@ static bool objInvoke(NPObject *npobj, NPIdentifier ident,
             } else if (!strcmp(name, "PerformAction") && (argCount == 1) &&
                        NPVARIANT_IS_STRING(args[0])) {
                 // Perform action
-                char *action = strndup(NPVARIANT_TO_STRING(args[0]).utf8characters, NPVARIANT_TO_STRING(args[0]).utf8length);
+                char *action = strndup(NPVARIANT_TO_STRING(args[0]).UTF8Characters, NPVARIANT_TO_STRING(args[0]).UTF8Length);
                 if (!action) return false;
                 
                 int ret = sign_performAction(this->plugin, action);

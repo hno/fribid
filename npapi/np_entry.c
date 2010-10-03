@@ -41,8 +41,8 @@
 //
 // Main plugin entry point implementation
 //
-#include <npapi.h>
-#include <npupp.h>
+#include "npapi.h"
+#include "npfunctions.h"
 #include <string.h>
 
 #ifndef HIBYTE

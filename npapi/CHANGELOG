@@ -1,3 +1,8 @@
+2010-10-03 Henrik Nordström:
+
+  * Upgraded to newer and better isolated header files from
+    mozilla xulrunnner 1.9.2.10 as-is without any changes.
+  * Trivial #include changes in C files to match new headers
 
 2009-11-13. Changed by Samuel Lidén Borell:
 
@@ -5,4 +10,5 @@
   * Changed the syntax mode in the header to C, and changed
     the indentation to 4 spaces.
   * Disabled Java support (didn't compile and wasn't needed)
+
 

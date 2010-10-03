@@ -36,8 +36,8 @@
 // Change to "/" to make this plugin work with Opera
 #define NO_FILE_EXTENSIONS ""
 
-NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16 mode,
-                int16 argc, char *argn[], char *argv[], NPSavedData *data) {
+NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode,
+                int16_t argc, char *argn[], char *argv[], NPSavedData *data) {
     instance->pdata = npobject_fromMIME(instance, pluginType);
     
     if (instance->pdata) {
