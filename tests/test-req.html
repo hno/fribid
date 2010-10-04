@@ -57,12 +57,12 @@ function setPar(key, value) {
     // 8012 = invalid value?
 }
 
-function init() {
+function default_test() {
     output = document.getElementById('output');
     pluginVersion = document.getElementById('pluginVersion');
     output.value = "";
-    /*output.value += "Version: >";
-    output.value += pluginVersion.GetVersion()+"<\n\n";*/
+    output.value += "Version: ";
+    output.value += pluginVersion.GetVersion()+"\n\n";
     
     plugin = document.getElementById('plugin');
     
@@ -108,11 +108,12 @@ function init() {
         plugin.StoreCertificates('p7c','MIINcAYJ'...)
     
     */
+    plugin.Reset();
 }
 
 </script>
 </head>
-<body onload="init()" style="background: #FFFFDD">
+<body style="background: #FFFFDD">
 <p> Plugin installerad: 
 <script type="text/javascript">
 var pluginInstalled = false;
@@ -124,6 +125,8 @@ var pluginInstalled =
 
 document.write(pluginInstalled ? "Ja" : "Nej");
 </script>
+
+<button onclick="javascript:default_test()">Test</button>
 </p>
 
 <div>

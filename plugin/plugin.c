@@ -31,8 +31,27 @@
 
 #include "plugin.h"
 
+#include <stdio.h>
+
 #define MAX_WINDOWS 20  // safety limit to avoid "popup storms"
 static const char *activeURLs[MAX_WINDOWS];
+
+const char *plugin_name(Plugin *plugin)
+{
+    switch(plugin->type) {
+    case PT_Version:
+	return "Version";
+    case PT_Authentication:
+	return "Authentication";
+    case PT_Signer:
+	return "Signer";
+    case PT_RegUtil:
+	return "RegUtil";
+    case PT_Logout:
+	return "Logout";
+    }
+    return "UNKNOWN PLUGIN";
+}
 
 Plugin *plugin_new(PluginType pluginType, const char *url,
                    const char *hostname, const char *ip,
@@ -114,10 +133,10 @@ static void unlockURL(const char *url) {
     activeURLs[index] = NULL;
 }
 
-static char **getCommonParamPointer(Plugin *plugin, const char *name) {
+static char **getCommonSignAuthParamPointer(Plugin *plugin, const char *name) {
     if (!strcmp(name, "Policys")) return &plugin->info.auth.policys;
     if (!strcmp(name, "Signature")) return &plugin->info.auth.signature;
-    if (!strcmp(name, "Subjects")) return &plugin->info.sign.subjectFilter;
+    if (!strcmp(name, "Subjects")) return &plugin->info.auth.subjectFilter;
     return NULL;
 }
 
@@ -125,12 +144,12 @@ static char **getParamPointer(Plugin *plugin, const char *name) {
     switch (plugin->type) {
         case PT_Authentication:
             if (!strcmp(name, "Challenge")) return &plugin->info.auth.challenge;
-            return getCommonParamPointer(plugin, name);
+            return getCommonSignAuthParamPointer(plugin, name);
         case PT_Signer:
             if (!strcmp(name, "Nonce")) return &plugin->info.sign.challenge;
             if (!strcmp(name, "TextToBeSigned")) return &plugin->info.sign.message;
             if (!strcmp(name, "NonVisibleData")) return &plugin->info.sign.invisibleMessage;
-            return getCommonParamPointer(plugin, name);
+            return getCommonSignAuthParamPointer(plugin, name);
         default:
             return NULL;
     }

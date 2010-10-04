@@ -42,6 +42,7 @@ typedef enum {
 
 typedef struct {
     PluginType type;
+    const char *type_name;
     
     char *url;
     char *hostname;
@@ -70,6 +71,29 @@ typedef struct {
             char *signature;
         } sign;
 	struct {
+	    /* cert parameters */
+	    char *keySize;
+	    char *keyUsage;
+	    char *subjectDN;
+	    /* password restrictions */
+	    char *minLen;
+	    char *maxLen;
+	    char *minChars;
+	    char *minDigits;
+	    /* cmc parameters */
+	    char *oneTimePassword;
+	    char *rfc2729cmcoid;
+	    /* possible unknown parameters */
+	    // char *compareStr;
+	    // char *maxCompareInRow;
+	    // char *maxEqualInRow;
+	    // char *tokenName;
+	    // char *hashAlg;
+	    // char *typenType;
+	    // char *promptUser;
+	    // char *useBranding;
+	    /* Created Requests */
+	    struct regutil_request *requests;
 	} regutil;
     } info;
 } Plugin;
@@ -79,6 +103,7 @@ Plugin *plugin_new(PluginType pluginType, const char *url,
                    const char *hostname, const char *ip,
                    Window windowId);
 void plugin_free(Plugin *plugin);
+const char *plugin_name(Plugin *plugin);
 
 /* Javascript API */
 char *version_getVersion(Plugin *plugin);

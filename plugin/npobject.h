@@ -27,9 +27,13 @@
 
 #include "plugin.h"
 
-#define MIME_VERSION "application/x-personal-version"
-#define MIME_AUTHENTICATION "application/x-personal-authentication"
-#define MIME_SIGNER "application/x-personal-signer2"
+#define MIME_PERSONAL_REGUTIL "application/x-personal-regutil"			// Regutil  / PT_REGUTIL
+#define MIME_PERSONAL_SIGNE "application/x-personal-signer"			// Signer (not implemented)
+#define MIME_PERSONAL_SIGNER "application/x-personal-signer2"			// Signer2  / PT_SIGNER
+#define MIME_PERSONAL_VERSION "application/x-personal-version"			// Version  / PT_VERSION
+#define MIME_PERSONAL_AUTHENTICATION "application/x-personal-authentication"	// Authentication / PT_AUTHENTICATION
+#define MIME_PERSONAL_WEBADMIN "application/x-personal-webadmin"		// Webadmin (not implemented)
+#define MIME_PERSONAL_LOGOUT "application/x-personal-logout"			// Logout   / PT_LOGOUT
 
 typedef struct {
     NPObject base;

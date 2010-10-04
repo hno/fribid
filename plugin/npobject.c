@@ -193,7 +193,7 @@ static bool objHasMethod(NPObject *npobj, NPIdentifier ident) {
     if (!copyIdentifierName(ident, name, sizeof(name)))
         return false;
     
-    printf("objHasMethod: %d %s(%d)\n", this->plugin->type, name);
+    printf("objHasMethod: %s %s\n", plugin_name(this->plugin), name);
 
     switch (this->plugin->type) {
         case PT_Version:
@@ -217,7 +217,7 @@ static bool objInvoke(NPObject *npobj, NPIdentifier ident,
     if (!copyIdentifierName(ident, name, sizeof(name)))
         return false;
 
-    printf("objInvoke: %d %s(%d)\n", this->plugin->type, name, argCount);
+    printf("objInvoke: %s %s(%d)\n", plugin_name(this->plugin), name, argCount);
 
     switch (this->plugin->type) {
         case PT_Version:
@@ -375,12 +375,16 @@ static NPObject *npobject_new(NPP instance, PluginType pluginType) {
 }
 
 NPObject *npobject_fromMIME(NPP instance, NPMIMEType mimeType) {
-    if (!strcmp(mimeType, MIME_VERSION)) {
+    if (!strcmp(mimeType, MIME_PERSONAL_VERSION)) {
         return npobject_new(instance, PT_Version);
-    } else if (!strcmp(mimeType, MIME_AUTHENTICATION)) {
+    } else if (!strcmp(mimeType, MIME_PERSONAL_AUTHENTICATION)) {
         return npobject_new(instance, PT_Authentication);
-    } else if (!strcmp(mimeType, MIME_SIGNER)) {
+    } else if (!strcmp(mimeType, MIME_PERSONAL_SIGNER)) {
         return npobject_new(instance, PT_Signer);
+    } else if (!strcmp(mimeType, MIME_PERSONAL_REGUTIL)) {
+        return npobject_new(instance, PT_RegUtil);
+    } else if (!strcmp(mimeType, MIME_PERSONAL_LOGOUT)) {
+        return npobject_new(instance, PT_Logout);
     } else {
         return NULL;
     }

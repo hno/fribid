@@ -77,9 +77,11 @@ NPError NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
 }
 
 char *NPP_GetMIMEDescription() {
-    return MIME_VERSION ":" NO_FILE_EXTENSIONS ":Version;"
-           MIME_AUTHENTICATION ":" NO_FILE_EXTENSIONS ":Authentication;"
-           MIME_SIGNER ":" NO_FILE_EXTENSIONS ":Signer2";
+    return MIME_PERSONAL_VERSION ":" NO_FILE_EXTENSIONS ":Version;"
+           MIME_PERSONAL_AUTHENTICATION ":" NO_FILE_EXTENSIONS ":Authentication;"
+           MIME_PERSONAL_SIGNER ":" NO_FILE_EXTENSIONS ":Signer2"
+	   MIME_PERSONAL_LOGOUT ":" NO_FILE_EXTENSIONS ":Logout"
+	   ;
 }
 
 NPError NPP_Initialize() {
