@@ -36,7 +36,6 @@
 #include "../common/pipe.h"
 #include "plugin.h"
 
-static const char mainBinary[] = SIGNING_EXECUTABLE;
 static const char ipcOption[] = "--internal--ipc=" IPCVERSION;
 static const char windowIdOption[] = "--internal--window-id";
 
@@ -53,6 +52,10 @@ typedef struct {
 static void openPipesWithArgs(PipeInfo *pipeinfo, const char *argv[]) {
     int pipeIn[2];
     int pipeOut[2];
+    const char *mainBinary = getenv("FRIBID_SIGN");
+    if (!mainBinary)
+	mainBinary = SIGNING_EXECUTABLE;
+	
     
     if (pipe(pipeIn) == -1 || pipe(pipeOut) == -1) {
         perror(BINNAME ": Failed to create pipe");

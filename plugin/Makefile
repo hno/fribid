@@ -60,7 +60,7 @@ install: all
 	for path in $(NPAPI_PLUGIN_PATHS); do \
 	    (../configure --internal--remove-link $(DESTDIR)$$path/libfribidplugin.so $(NPAPI_PLUGIN_LIB) || exit 1) && \
 	    install -d $(DESTDIR)$$path && \
-	    ln -sf $(NPAPI_PLUGIN_LIB) $(DESTDIR)$$path/libfribidplugin.so; \
+	    ln -sf $(NPAPI_PLUGIN_LIB) $(DESTDIR)$$path/libfribidplugin.so || true; \
 	done
 
 uninstall:
